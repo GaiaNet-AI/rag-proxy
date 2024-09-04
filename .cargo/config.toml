@@ -1,0 +1,10 @@
+[build]
+target = "wasm32-wasi"
+rustflags = [
+    "--cfg",
+    "wasmedge",
+    "--cfg",
+    "tokio_unstable",
+    "--cfg",
+    "skip_wasi_unsupported",
+]
