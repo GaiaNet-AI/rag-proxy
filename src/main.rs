@@ -11,6 +11,8 @@ mod vss;
 #[derive(Debug, Clone, Parser)]
 #[command(version = env!("CARGO_PKG_VERSION"))]
 pub struct AppArgs {
+    #[arg(long, default_value = "0.0.0.0:8181")]
+    pub lister_addr: String,
     #[arg(short, long, default_value = "http://localhost:8080/v1")]
     pub base_url: String,
     #[arg(long, default_value = "embedding")]
@@ -64,7 +66,7 @@ async fn main() {
         .with_state(app_state);
 
     // run it
-    let addr = "0.0.0.0:8000";
+    let addr = &args.lister_addr;
     let tcp_listener = TcpListener::bind(addr).await.unwrap();
     println!("listening on {}", addr);
     axum::Server::from_tcp(tcp_listener.into_std().unwrap())

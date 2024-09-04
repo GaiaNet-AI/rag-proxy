@@ -17,6 +17,7 @@ wasmedge target/wasm32-wasi/release/rag-proxy.wasm --help
 Usage: rag-proxy.wasm [OPTIONS]
 
 Options:
+      --lister-addr <LISTER_ADDR>                    [default: 0.0.0.0:8181]
   -b, --base-url <BASE_URL>                          [default: http://localhost:8080/v1]
       --embedding-model-name <EMBEDDING_MODEL_NAME>  [default: embedding]
       --embedding-base-url <EMBEDDING_BASE_URL>      [default: http://localhost:8080/v1]
