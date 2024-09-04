@@ -43,23 +43,16 @@ pub struct ScoredPoint {
 }
 
 #[derive(Debug, Clone)]
-pub struct Client {
-    pub url_base: String,
+pub struct Client<'a> {
+    pub url_base: &'a str,
 }
 
-impl Client {
-    pub fn new_with_url(url_base_: String) -> Client {
-        Client {
-            url_base: url_base_,
-        }
+#[allow(dead_code)]
+impl<'a> Client<'a> {
+    pub fn new_with_url(url_base: &str) -> Client {
+        Client { url_base }
     }
 
-    pub fn new() -> Client {
-        Client::new_with_url("http://localhost:6333".to_string())
-    }
-}
-
-impl Client {
     /// Shortcut functions
     pub async fn collection_info(&self, collection_name: &str) -> u64 {
         let v = self.collection_info_api(collection_name).await.unwrap();

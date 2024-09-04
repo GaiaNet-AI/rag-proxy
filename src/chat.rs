@@ -9,7 +9,7 @@ use endpoints::{
     embeddings::{EmbeddingObject, EmbeddingsResponse},
 };
 
-use crate::AppState;
+use crate::{vss, AppState};
 
 pub async fn chat(
     State(state): State<AppState>,
@@ -43,9 +43,16 @@ async fn update_context_by_rag(
     point: &[f64],
     collection_name: &str,
 ) -> anyhow::Result<String> {
-    let scored_points = state
-        .vss
-        .client
+    let (collection_name, vss_url) = match state.vss.collections.get(collection_name) {
+        Some(url) => (collection_name, url),
+        None => ("default", state.vss.collections.get("default").unwrap()),
+    };
+
+    log::info!("seaching points in collection: {collection_name} from {vss_url}",);
+
+    let vss_client = vss::Client::new_with_url(&vss_url);
+
+    let scored_points = vss_client
         .search_points(
             collection_name,
             point,
@@ -75,9 +82,9 @@ async fn update_context_by_rag(
 }
 
 async fn embedding_text(state: &AppState, text: &str) -> anyhow::Result<Vec<EmbeddingObject>> {
-    let uri = format!("{}/embeddings", state.vss.embedding_base_url);
+    let uri = format!("{}/embeddings", state.embedding_base_url);
     let body = serde_json::json!({
-        "model":state.vss.embedding_model_name,
+        "model":state.embedding_model_name,
         "input": [text]
     });
 
