@@ -13,9 +13,15 @@ use crate::AppState;
 
 pub async fn chat(
     State(state): State<AppState>,
+    headers: axum::http::HeaderMap,
     Json(data): Json<ChatCompletionRequest>,
 ) -> Response<Body> {
-    match chat_impl(state, data).await {
+    let x_forwarded_host = headers
+        .get("x-forwarded-host")
+        .map(|v| v.to_str().ok())
+        .flatten();
+
+    match chat_impl(state, data, x_forwarded_host).await {
         Ok(resp) => resp,
         Err(e) => Response::builder()
             .status(500)
@@ -88,15 +94,21 @@ async fn embedding_text(state: &AppState, text: &str) -> anyhow::Result<Vec<Embe
 async fn chat_impl(
     state: AppState,
     mut data: ChatCompletionRequest,
+    x_forwarded_host: Option<&str>,
 ) -> anyhow::Result<Response<Body>> {
     let uri = format!("{}/chat/completions", state.base_url);
+
+    let collection_name = x_forwarded_host
+        .and_then(|s| s.split_once('.'))
+        .and_then(|(s, _)| Some(s))
+        .unwrap_or("default");
 
     if let Some(ChatCompletionRequestMessage::User(user_msg)) = data.messages.last_mut() {
         if let ChatCompletionUserMessageContent::Text(text) = user_msg.content() {
             let embeddings = embedding_text(&state, text).await?;
             if let Some(points) = embeddings.first() {
                 let rag_text =
-                    update_context_by_rag(&state, text, &points.embedding, "default").await?;
+                    update_context_by_rag(&state, text, &points.embedding, collection_name).await?;
                 let name = user_msg.name().cloned();
                 let content = ChatCompletionUserMessageContent::Text(rag_text);
                 *user_msg = ChatCompletionUserMessage::new(content, name)
