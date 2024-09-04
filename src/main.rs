@@ -6,6 +6,7 @@ use hyper::Client;
 use tokio::net::TcpListener;
 
 mod chat;
+mod embeddings;
 mod vss;
 
 #[derive(Debug, Clone, Parser)]
@@ -63,6 +64,7 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         .route("/v1/chat/completions", post(chat::chat))
+        .route("/v1/embeddings", post(embeddings::embeddings))
         .with_state(app_state);
 
     // run it
